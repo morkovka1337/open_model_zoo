@@ -28,9 +28,9 @@ from ...representation import CharacterRecognitionPrediction
 
 
 class Im2latexEvaluator(BaseEvaluator):
-    def __init__(self, dataset, reader, preprocessing, metric_executor, launcher, model):
+    def __init__(self, dataset, reader, metric_executor, launcher, model):
         self.dataset = dataset
-        self.preprocessing_executor = preprocessing
+        # self.preprocessing_executor = preprocessing
         self.metric_executor = metric_executor
         self.launcher = launcher
         self.model = model
@@ -49,7 +49,7 @@ class Im2latexEvaluator(BaseEvaluator):
             reader = BaseReader.provide(data_reader_config['type'], data_source, data_reader_config)
         else:
             raise ConfigError('reader should be dict or string')
-        preprocessing = PreprocessingExecutor(dataset_config.get('preprocessing', []), dataset.name)
+        # preprocessing = PreprocessingExecutor(dataset_config.get('preprocessing', []), dataset.name)
         metrics_executor = MetricsExecutor(dataset_config['metrics'], dataset)
         launcher = create_launcher(config['launchers'][0], delayed_model_loading=True)
         meta = dataset.metadata
@@ -60,7 +60,7 @@ class Im2latexEvaluator(BaseEvaluator):
             meta,
             config.get('_model_is_blob'),
         )
-        return cls(dataset, reader, preprocessing, metrics_executor, launcher, model)
+        return cls(dataset, reader, metrics_executor, launcher, model)
 
     def process_dataset(self, stored_predictions, progress_reporter, *args, **kwargs):
         self._annotations, self._predictions = [], []
@@ -72,7 +72,7 @@ class Im2latexEvaluator(BaseEvaluator):
 
             batch_identifiers = [annotation.identifier for annotation in batch_annotation]
             batch_input = [self.reader(identifier=identifier) for identifier in batch_identifiers]
-            batch_input = self.preprocessing_executor.process(batch_input, batch_annotation)
+            # batch_input = self.preprocessing_executor.process(batch_input, batch_annotation)
             batch_input, _ = extract_image_representations(batch_input)
             batch_prediction = self.model.predict(batch_identifiers, batch_input)
             batch_prediction = [CharacterRecognitionPrediction(
@@ -288,14 +288,24 @@ class SequentialModel:
 class RecognizerDLSDKModel(BaseModel):
     def __init__(self, network_info, launcher, suffix):
         super().__init__(network_info, launcher, suffix)
-        model, weights = self.automatic_model_search(network_info)
-        if weights is not None:
-            self.network = launcher.read_network(str(model), str(weights))
-            self.exec_network = launcher.ie_core.load_network(self.network, launcher.device)
+        self.model, self.weights = self.automatic_model_search(network_info)
+        self.launcher = launcher
+        if self.weights is not None:
+            self.network = self.launcher.read_network(str(self.model), str(self.weights))
         else:
-            self.exec_network = launcher.ie_core.import_network(str(model))
-
+            self.exec_network = self.launcher.ie_core.import_network(str(self.model))
     def predict(self, inputs, identifiers=None):
+        if self.weights is not None:
+            if self.network.name == 'encoder':
+                # encoder
+                if inputs['imgs'].shape != self.network.input_info['imgs'].input_data.shape:
+                    self.network.reshape({'imgs': inputs['imgs'].shape})
+            else:
+                # decoder
+                if inputs['row_enc_out'].shape != self.network.input_info['row_enc_out'].input_data.shape:
+                    self.network.reshape({'row_enc_out': inputs['row_enc_out'].shape})
+            self.exec_network = self.launcher.ie_core.load_network(self.network, self.launcher.device)
+
         return self.exec_network.infer(inputs)
 
     def release(self):
