@@ -29,18 +29,18 @@ evaluations:
             - type: im2latex_match_images_metric
               max_pixel_column_diff: 0
 
-        - name: im2latex_medium_rendered
+        # - name: im2latex_medium_rendered
 
-          preprocessing:
-            - type: corner_crop
-              dst_width: 1400
-              dst_height: 160
-            - type: padding
-              pad_type: right_bottom
-              dst_width: 1400
-              dst_height: 160
-              pad_value: '(255, 255, 255)'
+        #   preprocessing:
+        #     - type: corner_crop
+        #       dst_width: 1400
+        #       dst_height: 160
+        #     - type: padding
+        #       pad_type: right_bottom
+        #       dst_width: 1400
+        #       dst_height: 160
+        #       pad_value: '(255, 255, 255)'
 
-          metrics:
-            - type: im2latex_match_images_metric
-              max_pixel_column_diff: 0
+        #   metrics:
+        #     - type: im2latex_match_images_metric
+        #       max_pixel_column_diff: 0
