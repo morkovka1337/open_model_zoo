@@ -73,7 +73,7 @@ def crop_image(img, output_path, default_size=None):
 
 
 def run(cmd, timeout_sec):
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.DEVNULL)
+    proc = subprocess.Popen(cmd, shell=True) # , stdout=subprocess.DEVNULL)
 
     def kill_proc(process):
         return process.kill()
@@ -354,6 +354,7 @@ class Im2latexRenderBasedMetric(FullDatasetEvaluationMetric):
     def evaluate(self, annotations, predictions):
         result = 0
         with tempfile.TemporaryDirectory() as images_dir:
+            os.system('ls -la')
             self.render_images(annotations, predictions, images_dir)
             result = self.compare_pics(images_dir)
         return result
