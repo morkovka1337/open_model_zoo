@@ -550,7 +550,7 @@ datasets:
       data_dir: im2latex_medium_photographed
       images_dir: im2latex_medium_photographed/images_processed
       formula_file: im2latex_medium_photographed/formulas.norm.lst
-      split_file: im2latex_medium_photographed/test_filter.lst
+      split_file: im2latex_medium_photographed/toy_filter.lst
       vocab_file: im2latex_medium_photographed/vocab.pkl
     annotation: im2latex_medium_photographed.pickle
     dataset_meta: im2latex_medium_photographed.json
